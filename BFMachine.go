@@ -5,11 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ChloeTigre/gobrainfuckyourself/SliceStack"
+	"github.com/golang/example/stringutil"
 	"strings"
 	_ "time"
-	"github.com/golang/example/stringutil"
-
-
 )
 
 type memoryLocation uint
@@ -150,7 +148,7 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 	act := (bfm.loopCounter == 0 || bfm.Memory[bfm.DataPointer] != 0)
 	// when we're in an operation that changes some memory zones, copy them
 	// to the State
-	if (command == OPERATOR_INC || command == OPERATOR_DEC) {
+	if command == OPERATOR_INC || command == OPERATOR_DEC {
 		//nextStep.Memory = make([]byte, len(bfm.Memory))
 		//copy(bfm.Memory, nextStep.Memory)
 		nextStep.Memory = []byte{}
@@ -163,8 +161,7 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 		// copy(bfm.jumpStack, nextStep.jumpStack)
 	}
 
-
-	if !act && false{
+	if !act && false {
 		nextStep.InstructionPointer = bfm.InstructionPointer + 1
 		switch command {
 
@@ -221,7 +218,7 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 		if bfm.Memory[bfm.DataPointer] == 0 {
 			//nextStep.jumpStack, nextStep.InstructionPointer, err = nextStep.jumpStack.Pop()
 			nextStep.InstructionPointer, err = forwardScan([]rune(bfm.Program), bfm.InstructionPointer)
-			if err!=nil {
+			if err != nil {
 				panic(err)
 			}
 			return
@@ -230,7 +227,7 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 	case OPERATOR_LOOP_BOTTOM:
 		if bfm.Memory[bfm.DataPointer] != 0 {
 			nextStep.InstructionPointer, err = backwardScan([]rune(bfm.Program), bfm.InstructionPointer)
-			if err!=nil {
+			if err != nil {
 				panic("bbbbbh")
 			}
 			return
@@ -246,13 +243,13 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 	return
 }
 
-func forwardScan(program []rune, startPosition uint) (pos uint, err error){
+func forwardScan(program []rune, startPosition uint) (pos uint, err error) {
 	occ := 1
 	for i, e := range program[startPosition+1:] {
 		switch e {
 		case '[':
 			occ += 1
-		  break
+			break
 		case ']':
 			occ -= 1
 			break
@@ -268,7 +265,7 @@ func forwardScan(program []rune, startPosition uint) (pos uint, err error){
 	return
 }
 
-func backwardScan(program []rune, startPosition uint) (pos uint, err error){
+func backwardScan(program []rune, startPosition uint) (pos uint, err error) {
 	occ := 1
 	sprog := string(program)
 	rprog := stringutil.Reverse(sprog)
@@ -277,7 +274,7 @@ func backwardScan(program []rune, startPosition uint) (pos uint, err error){
 		switch e {
 		case ']':
 			occ += 1
-		  break
+			break
 		case '[':
 			occ -= 1
 			break
@@ -305,7 +302,7 @@ Memory head: %+v
 
 		bfm.DataPointer, bfm.InstructionPointer,
 		bfm.loopCounter,
-	  bfm.Memory[0:128])
+		bfm.Memory[0:128])
 
 }
 

@@ -3,7 +3,7 @@ package main
 import "github.com/ChloeTigre/gobrainfuckyourself"
 
 func main() {
-		prog1 := `[ This program prints "Hello World!" and a newline to the screen, its
+	prog1 := `[ This program prints "Hello World!" and a newline to the screen, its
       length is 106 active command characters. [It is not the shortest.]
 
       This loop is an "initial comment loop", a simple way of adding a comment
@@ -46,8 +46,8 @@ func main() {
     +++.------.--------.    Cell #3 for 'rl' and 'd'
     >>+.                    Add 1 to Cell #5 gives us an exclamation point
 >++.                    And finally a newline from Cell #6`
-  prog2 := `+++.+++.-.-.-.-.-.-.`
-  if prog1 != prog2 {
-  gobrainfuckyourself.RunProgram(prog1)
-}
+	prog2 := `+++.+++.-.-.-.-.-.-.`
+	if prog1 != prog2 {
+		gobrainfuckyourself.RunProgram(prog1)
+	}
 }
