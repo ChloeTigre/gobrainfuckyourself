@@ -161,35 +161,6 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 		// copy(bfm.jumpStack, nextStep.jumpStack)
 	}
 
-	if !act && false {
-		nextStep.InstructionPointer = bfm.InstructionPointer + 1
-		switch command {
-
-		case OPERATOR_LOOP_TOP:
-			// when data pointer has a non-0 value
-			// then store next-command location for a jump, and move forward
-			// else, set skip bit so we will skip commands until we meet a ]
-			nextStep.loopCounter += 1
-			if bfm.Memory[bfm.DataPointer] == 0 {
-				//nextStep.jumpStack, nextStep.InstructionPointer, err = nextStep.jumpStack.Pop()
-			} else {
-				nextStep.jumpStack, err = nextStep.jumpStack.Push(bfm.InstructionPointer + 1)
-			}
-			break
-		case OPERATOR_LOOP_BOTTOM:
-			nextStep.loopCounter -= 1
-			if bfm.Memory[bfm.DataPointer] != 0 && nextStep.loopCounter == 0 {
-				nextStep.jumpStack, nextStep.InstructionPointer, err = nextStep.jumpStack.Pop()
-			} else {
-				nextStep.InstructionPointer = bfm.InstructionPointer + 1
-			}
-			break
-		default:
-			break
-
-		}
-		return
-	}
 	switch command {
 	case OPERATOR_DEC:
 		nextStep.Memory[bfm.DataPointer] = bfm.Memory[bfm.DataPointer] - 1
