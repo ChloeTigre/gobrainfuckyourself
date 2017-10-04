@@ -209,7 +209,6 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 	case OPERATOR_INPUT:
 		nextStep.waitForInput = true
 		panic("input not implemented")
-		break
 	case OPERATOR_LOOP_TOP:
 		// when data pointer has a non-0 value
 		// then store next-command location for a jump, and move forward
