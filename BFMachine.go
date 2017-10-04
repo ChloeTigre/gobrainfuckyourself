@@ -26,6 +26,11 @@ const (
 	OPERATOR_INVALID = -1
 )
 
+var OutOfBoundsError = errors.New("Tried to reach a memory zone out of bounds")
+var UnderflowError = errors.New("Value underflow")
+var OverflowError = errors.New("Value overflow")
+var EndOfProgramError = errors.New("Program finished")
+
 type BFMachine struct {
 	InstructionPointer, DataPointer uint
 	Memory                          []byte
@@ -66,8 +71,6 @@ func (bfm *BFMachine) Step() (err error) {
 	nextState, err = bfm.EvalNextStep()
 	if err != nil {
 		return
-	}
-	if len(nextState.Memory) > 0 {
 	}
 	err = bfm.updateMachineState(nextState)
 	if err != nil {
@@ -119,7 +122,7 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 		}
 	}()
 	if int(bfm.InstructionPointer) >= len(bfm.Program) {
-		err = errors.New("Execution finished")
+		err = EndOfProgramError
 		return
 	}
 
@@ -149,15 +152,32 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 	switch command {
 	case OPERATOR_DEC:
 		nextStep.Memory[bfm.DataPointer] = bfm.Memory[bfm.DataPointer] - 1
+		/*
+		if bfm.Memory[bfm.DataPointer] == 0 {
+			err = UnderflowError
+			return
+		}
+		*/
 		break
 	case OPERATOR_INC:
 		nextStep.Memory[bfm.DataPointer] = bfm.Memory[bfm.DataPointer] + 1
+		/*
+		if bfm.Memory[bfm.DataPointer] == 255 {
+			err = OverflowError
+			return
+		}
+		*/
 		break
 	case OPERATOR_LEFT:
 		nextStep.DataPointer = bfm.DataPointer - 1
+		if bfm.DataPointer == 0 {
+			err = OutOfBoundsError
+			return
+		}
 		break
 	case OPERATOR_RIGHT:
 		nextStep.DataPointer = bfm.DataPointer + 1
+		// let's not handle the right bound
 		break
 	case OPERATOR_OUTPUT:
 		nextStep.waitForOutput = true
@@ -185,7 +205,6 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 				panic("bbbbbh")
 			}
 			return
-		} else {
 		}
 		break
 	case OPERATOR_INVALID:
