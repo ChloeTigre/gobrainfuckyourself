@@ -10,7 +10,6 @@ import (
 	_ "time"
 )
 
-type memoryLocation uint
 type bfOperator int
 
 // these two definitions are bound (they should be in the same order)
@@ -27,25 +26,12 @@ const (
 	OPERATOR_INVALID = -1
 )
 
-const (
-	OPMASK_RIGHT bfOperator = 1 << (2 * iota)
-	OPMASK_LEFT
-	OPMASK_INC
-	OPMASK_DEC
-	OPMASK_OUTPUT
-	OPMASK_INPUT
-	OPMASK_LOOP_TOP
-	OPMASK_LOOP_BOTTOM
-	OPMASK_INVALID = 0
-)
-
 type BFMachine struct {
 	InstructionPointer, DataPointer uint
 	Memory                          []byte
 	Program                         string
 	jumpStack                       SliceStack.UIntStack
 	OutputBuffer                    bytes.Buffer
-	loopCounter                     uint
 }
 
 type BFMachineState struct {
@@ -53,25 +39,28 @@ type BFMachineState struct {
 	Memory                          []byte
 	jumpStack                       SliceStack.UIntStack
 	waitForInput, waitForOutput     bool
-	loopCounter                     uint
 }
 
+// Create a Brainfuck Machine with an empty program
 func CreateBFMachine() (machine *BFMachine, err error) {
 	bfm := BFMachine{}
-	bfm.Memory = make([]byte, 60000)
-	bfm.jumpStack = make(SliceStack.UIntStack, 1024)
 	machine = &bfm
+	machine.LoadProgram("")
 	err = nil
 	return
 }
 
+// Initialize the Brainfuck Machine with a program
 func (bfm *BFMachine) LoadProgram(prog string) (err error) {
 	bfm.Program = prog
 	bfm.InstructionPointer = 0
 	bfm.DataPointer = 0
+	bfm.Memory = make([]byte, 60000)
+	bfm.jumpStack = make(SliceStack.UIntStack, 1024)
 	return
 }
 
+// perform one step. Could be called interactively
 func (bfm *BFMachine) Step() (err error) {
 	var nextState *BFMachineState
 	nextState, err = bfm.EvalNextStep()
@@ -85,12 +74,12 @@ func (bfm *BFMachine) Step() (err error) {
 		panic("fuck2")
 	}
 	if nextState.waitForOutput {
-		// fmt.Print(";", bfm.Memory[bfm.DataPointer], ",")
 		bfm.OutputBuffer.WriteByte(bfm.Memory[bfm.DataPointer])
 	}
 	return
 }
 
+// apply the machine state update
 func (bfm *BFMachine) updateMachineState(nextState *BFMachineState) (err error) {
 	bfm.InstructionPointer = nextState.InstructionPointer
 	bfm.DataPointer = nextState.DataPointer
@@ -103,11 +92,11 @@ func (bfm *BFMachine) updateMachineState(nextState *BFMachineState) (err error) 
 		bfm.jumpStack = SliceStack.UIntStack{}
 		bfm.jumpStack = append(bfm.jumpStack, nextState.jumpStack...)
 	}
-	bfm.loopCounter = nextState.loopCounter
 
 	return
 }
 
+// just an elementary parser
 func getCommandCode(theChar byte) (operator bfOperator, err error) {
 	code := strings.Index(bfOperators, string(theChar))
 	if code == -1 {
@@ -120,6 +109,7 @@ func getCommandCode(theChar byte) (operator bfOperator, err error) {
 	return
 }
 
+// compute next step of the Brainfuck machine based on current machine
 func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 	if int(bfm.InstructionPointer) >= len(bfm.Program) {
 		err = errors.New("Execution finished")
@@ -138,7 +128,6 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 		InstructionPointer: bfm.InstructionPointer,
 		DataPointer:        bfm.DataPointer,
 		Memory:             make([]byte, 0),
-		loopCounter:        bfm.loopCounter,
 	}
 	command, errint = getCommandCode(bfm.Program[bfm.InstructionPointer])
 	if errint != nil {
@@ -148,16 +137,12 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 	// when we're in an operation that changes some memory zones, copy them
 	// to the State
 	if command == OPERATOR_INC || command == OPERATOR_DEC {
-		//nextStep.Memory = make([]byte, len(bfm.Memory))
-		//copy(bfm.Memory, nextStep.Memory)
 		nextStep.Memory = []byte{}
 		nextStep.Memory = append(nextStep.Memory, bfm.Memory...)
 	}
 	if command == OPERATOR_LOOP_TOP || command == OPERATOR_LOOP_BOTTOM {
-		// nextStep.jumpStack = make(SliceStack.UIntStack, 1024)
 		nextStep.jumpStack = SliceStack.UIntStack{}
 		nextStep.jumpStack = append(nextStep.jumpStack, bfm.jumpStack...)
-		// copy(bfm.jumpStack, nextStep.jumpStack)
 	}
 
 	switch command {
@@ -183,7 +168,6 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 		// when data pointer has a non-0 value
 		// then store next-command location for a jump, and move forward
 		// else, set skip bit so we will skip commands until we meet a ]
-		nextStep.loopCounter = bfm.loopCounter + 1
 		if bfm.Memory[bfm.DataPointer] == 0 {
 			//nextStep.jumpStack, nextStep.InstructionPointer, err = nextStep.jumpStack.Pop()
 			nextStep.InstructionPointer, err = forwardScan([]rune(bfm.Program), bfm.InstructionPointer)
@@ -265,12 +249,10 @@ func (bfm *BFMachine) Info() string {
 ---
 Data Pointer: %d
 Instruction Pointer: %d
-Loop counter: %d
 Memory head: %+v
 ---`,
 
 		bfm.DataPointer, bfm.InstructionPointer,
-		bfm.loopCounter,
 		bfm.Memory[0:128])
 
 }
@@ -280,7 +262,7 @@ func RunProgram(program string) {
 	if err != nil {
 		panic("oops")
 	}
-	bfm.Program = program
+	bfm.LoadProgram(program)
 	var i int = 0
 	for {
 		i += 1
