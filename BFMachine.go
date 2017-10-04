@@ -110,17 +110,18 @@ func getCommandCode(theChar byte) (operator bfOperator, err error) {
 }
 
 // compute next step of the Brainfuck machine based on current machine
+// TODO: refactor. This is shamefully long
 func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
-	if int(bfm.InstructionPointer) >= len(bfm.Program) {
-		err = errors.New("Execution finished")
-		return
-	}
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("INFO: ", bfm.Info())
 			panic(r)
 		}
 	}()
+	if int(bfm.InstructionPointer) >= len(bfm.Program) {
+		err = errors.New("Execution finished")
+		return
+	}
 
 	var command bfOperator
 	var errint error
@@ -196,6 +197,7 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 	return
 }
 
+// internal - jump to the relevant bracket
 func forwardScan(program []rune, startPosition uint) (pos uint, err error) {
 	occ := 1
 	for i, e := range program[startPosition+1:] {
@@ -218,6 +220,7 @@ func forwardScan(program []rune, startPosition uint) (pos uint, err error) {
 	return
 }
 
+// internal - jump to the relevant bracket
 func backwardScan(program []rune, startPosition uint) (pos uint, err error) {
 	occ := 1
 	sprog := string(program)
@@ -243,6 +246,7 @@ func backwardScan(program []rune, startPosition uint) (pos uint, err error) {
 	return
 }
 
+// Generate infos about the BFMachine - mostly for debugging
 func (bfm *BFMachine) Info() string {
 	//return fmt.Sprint(rune(bfm.Program[bfm.InstructionPointer]))
 	return fmt.Sprintf(`
@@ -257,6 +261,7 @@ Memory head: %+v
 
 }
 
+// Run a program
 func RunProgram(program string) {
 	bfm, err := CreateBFMachine()
 	if err != nil {
