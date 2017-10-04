@@ -145,7 +145,6 @@ func (bfm *BFMachine) EvalNextStep() (nextStep *BFMachineState, err error) {
 		nextStep.InstructionPointer = bfm.InstructionPointer + 1
 		return
 	}
-	act := (bfm.loopCounter == 0 || bfm.Memory[bfm.DataPointer] != 0)
 	// when we're in an operation that changes some memory zones, copy them
 	// to the State
 	if command == OPERATOR_INC || command == OPERATOR_DEC {
